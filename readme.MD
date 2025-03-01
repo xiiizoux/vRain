@@ -1,7 +1,7 @@
 
-![image](https://github.com/shanleiguang/vRain/tree/main/images/cover.png)
+![image](https://github.com/shanleiguang/vRain/blob/main/images/cover.png)
 
-##vRain) is  
+##vRain is  
 
 - vRain是一款中文古籍刻本风格直排电子书制作工具。
 - 参考中文古籍雕版刻本制作过程，首先生成书叶背景图，根据行数、每行字数形成一个自右向左、自上而下的位置数组，然后把文本逐字打印到对应位置，打满一页、新建一页，直到所有文字处理完。
