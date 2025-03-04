@@ -1,5 +1,5 @@
 
-![image](/images/cover.png)
+![image](images/cover.png)
 
 # vRain is  
 
