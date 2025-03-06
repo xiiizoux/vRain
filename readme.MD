@@ -1,5 +1,5 @@
 
-![image](cover.png)
+![image](https://github.com/shanleiguang/vRain/blob/main/cover.png)
 
 # vRain is  
 
