@@ -13,7 +13,7 @@
 
 # Example
 
-![image](https://github.com/shanleiguang/vRain/blob/main/images/截圖 2025-01-12 21.57.00.png)
+![image](https://github.com/shanleiguang/vRain/blob/main/images/截圖2025-01-12 21.57.00.png)
 
 # 基本功能  
 
