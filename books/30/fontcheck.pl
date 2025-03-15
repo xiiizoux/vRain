@@ -9,9 +9,7 @@ use strict;
 use warnings;
 
 use Font::FreeType;
-use Encode::HanConvert;
 use Getopt::Std;
-use POSIX qw(strftime);
 use Encode;
 use utf8;
 

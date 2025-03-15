@@ -48,23 +48,3 @@ foreach my $tfn (sort readdir(TBADIR)) {
 	close(TEXT);
 }
 close(TBADIR);
-
-sub get_font {
-	my ($char, $fref) = @_;
-	my @fonts = @$fref;
-	foreach my $f (@fonts) {
-		return $f if(font_check($f, $char));
-	}
-	return undef;
-}
-
-sub font_check {
-	my ($font, $char) = @_;
-	$font = "../../fonts/$font";
-	my $freetype = Font::FreeType->new();
-	my $face = $freetype->face($font);
-	my $fontglyph = $face->glyph_from_char($char);
-
-	return 1 if($fontglyph);
-	return 0;
-}
