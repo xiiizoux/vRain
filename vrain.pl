@@ -346,7 +346,7 @@ foreach my $tid ($from..$to) {
 		my $fn = get_font($tpchars[$i], \@fns);
 		my ($fx, $fy) = ($canvas_width/2-$fs/2, $title_y-$fs*$i*1.2);
 		$fx=-$fs/2 if(defined $if_tpcenter and $if_tpcenter == 0); #标题不居中时位于左侧
-		$vpage->text->textlabel($fx, $fy, $vfonts{$fn}, $fs, $tpchars[$i], -color => $title_font_color);
+		$vpage->text->textlabel($fx, $fy, $vfonts{$fn}, $fs, $tpchars[$i], -color => $title_font_color) if($lc_width > 0);
 	}
 	#标注文本采用双排后，每页、每列文字数是变化的，页数、列数不能提前确定，需逐个字符处理，直至全部字符处理完，期间指针到达整页时创新新页
 	while(1) {
@@ -364,42 +364,42 @@ foreach my $tid ($from..$to) {
             if($pid =~ m/^\d$/) {
             	$px = $canvas_width/2-$ps/2;
             	$px = -$ps/2 if(defined $if_tpcenter and $if_tpcenter == 0);
-                $vpage->text->textlabel($px, $py, $vfonts{$fn1}, $ps, $pid_zh, -color => $pager_font_color);
+                $vpage->text->textlabel($px, $py, $vfonts{$fn1}, $ps, $pid_zh, -color => $pager_font_color) if($lc_width > 0);
             }
             if($pid =~ m/^\d{2}$/) {
                 if($pid == 10) {
                 	$pid_zh = '十';
                 	$px = $canvas_width/2-$ps/2;
                 	$px = -$ps/2 if(defined $if_tpcenter and $if_tpcenter == 0);
-                    $vpage->text->textlabel($px, $py, $vfonts{$fn1}, $ps, $pid_zh, -color => $pager_font_color);
+                    $vpage->text->textlabel($px, $py, $vfonts{$fn1}, $ps, $pid_zh, -color => $pager_font_color) if($lc_width > 0);
                 } else {
                 	$pchars_zh[0] = '十' if($pchars_zh[0] eq '一');
                 	if(defined $if_tpcenter and $if_tpcenter == 0) {
                 		$px = -$ps/2;
-                		$vpage->text->textlabel($px, $py, $vfonts{$fn1}, $ps, $pchars_zh[0], -color => $pager_font_color);
-                		$vpage->text->textlabel($px, $py-$ps, $vfonts{$fn1}, $ps, $pchars_zh[1], -color => $pager_font_color);
+                		$vpage->text->textlabel($px, $py, $vfonts{$fn1}, $ps, $pchars_zh[0], -color => $pager_font_color) if($lc_width > 0);
+                		$vpage->text->textlabel($px, $py-$ps, $vfonts{$fn1}, $ps, $pchars_zh[1], -color => $pager_font_color) if($lc_width > 0);
                 	} else {
                 		$px = $canvas_width/2-$ps;
     	                $pid_zh = $pchars_zh[1].$pchars_zh[0];
-        	            $vpage->text->textlabel($px, $py, $vfonts{$fn1}, $ps, $pid_zh, -color => $pager_font_color);
+        	            $vpage->text->textlabel($px, $py, $vfonts{$fn1}, $ps, $pid_zh, -color => $pager_font_color) if($lc_width > 0);
         	        }
                 }
             }
             if($pid =~ m/^\d{3}$/) {
                 if($pid == 100) {
                 	$px = $canvas_width/2-$ps/2;
-                    $vpage->text->textlabel($px, $py, $vfonts{$fn1}, $ps, '百', -color => $pager_font_color);
+                    $vpage->text->textlabel($px, $py, $vfonts{$fn1}, $ps, '百', -color => $pager_font_color) if($lc_width > 0);
                 } else {
                     $pchars_zh[0] = '百' if($pchars_zh[0] eq '一');
                     if(defined $if_tpcenter and $if_tpcenter == 0) {
                     	$px = -$ps/2;
-                    	$vpage->text->textlabel($px, $py, $vfonts{$fn1}, $ps, $pchars_zh[0], -color => $pager_font_color);
-                		$vpage->text->textlabel($px, $py+$ps, $vfonts{$fn1}, $ps, $pchars_zh[1], -color => $pager_font_color);
-                		$vpage->text->textlabel($px, $py+$ps*2, $vfonts{$fn1}, $ps, $pchars_zh[2], -color => $pager_font_color);
+                    	$vpage->text->textlabel($px, $py, $vfonts{$fn1}, $ps, $pchars_zh[0], -color => $pager_font_color) if($lc_width > 0);
+                		$vpage->text->textlabel($px, $py+$ps, $vfonts{$fn1}, $ps, $pchars_zh[1], -color => $pager_font_color) if($lc_width > 0);
+                		$vpage->text->textlabel($px, $py+$ps*2, $vfonts{$fn1}, $ps, $pchars_zh[2], -color => $pager_font_color) if($lc_width > 0);
                     } else {
 	                    $vpage->text->textlabel($canvas_width/2, $py, $vfonts{$fn1}, $ps, $pchars_zh[0]);
-    	                $vpage->text->textlabel($canvas_width/2-$ps*0.75, $py+$ps/2, $vfonts{$fn1}, $ps*0.75, $pchars_zh[1], -color => $pager_font_color);
-        	            $vpage->text->textlabel($canvas_width/2-$ps*0.75, $py-$ps/2, $vfonts{$fn1}, $ps*0.75, $pchars_zh[2], -color => $pager_font_color);
+    	                $vpage->text->textlabel($canvas_width/2-$ps*0.75, $py+$ps/2, $vfonts{$fn1}, $ps*0.75, $pchars_zh[1], -color => $pager_font_color) if($lc_width > 0);
+        	            $vpage->text->textlabel($canvas_width/2-$ps*0.75, $py-$ps/2, $vfonts{$fn1}, $ps*0.75, $pchars_zh[2], -color => $pager_font_color) if($lc_width > 0);
         	        }
                 }
             }
@@ -412,7 +412,7 @@ foreach my $tid ($from..$to) {
 				my $fn = get_font($tpchars[$i], \@fns);
 				my ($fx, $fy) = ($canvas_width/2-$fs/2, $title_y-$fs*$i*1.2);
 				$fx=-$fs/2 if(defined $if_tpcenter and $if_tpcenter == 0);
-				$vpage->text->textlabel($fx, $fy, $vfonts{$fn}, $fs, $tpchars[$i], -color => $title_font_color);
+				$vpage->text->textlabel($fx, $fy, $vfonts{$fn}, $fs, $tpchars[$i], -color => $title_font_color) if($lc_width > 0);
 			}
 		}
 		#优先处理标注文本页内跨列、跨页的情况
