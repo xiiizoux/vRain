@@ -17,7 +17,7 @@ binmode(STDOUT, ':encoding(utf8)');
 binmode(STDERR, ':encoding(utf8)');
 
 my $software = 'vRain';
-my $version = 'v1.0';
+my $version = 'v1.2';
 
 #程序输入参数设置
 my %opts;
@@ -60,9 +60,9 @@ close(BCONFIG);
 #书籍标题、作者、背景图ID、正文及批注主辅字体
 my ($author, $title) = ($book{'author'}, $book{'title'});
 my ($canvas_id, $row_num, $row_delta_y) = ($book{'canvas_id'}, $book{'row_num'}, $book{'row_delta_y'});
-my ($fn1, $fn2, $fn3) = ($book{'font1'}, $book{'font2'}, $book{'font3'});
-my ($fs1_text, $fs2_text, $fs3_text) = ($book{'text_font1_size'}, $book{'text_font2_size'}, $book{'text_font3_size'});
-my ($fs1_comm, $fs2_comm, $fs3_comm) = ($book{'comment_font1_size'}, $book{'comment_font2_size'}, $book{'comment_font3_size'});
+my ($fn1, $fn2, $fn3, $fn4) = ($book{'font1'}, $book{'font2'}, $book{'font3'}, $book{'font4'});
+my ($fs1_text, $fs2_text, $fs3_text, $fs4_text) = ($book{'text_font1_size'}, $book{'text_font2_size'}, $book{'text_font3_size'}, $book{'text_font4_size'});
+my ($fs1_comm, $fs2_comm, $fs3_comm, $fs4_comm) = ($book{'comment_font1_size'}, $book{'comment_font2_size'}, $book{'comment_font3_size'}, $book{'comment_font4_size'});
 my $try_st = $book{'try_st'};
 
 if(not $canvas_id) { print "error: 'canvas_id' not defined!\n"; exit; }
@@ -72,6 +72,7 @@ if(not $fn1) { print "error: 'font1' not defined!\n"; exit; }
 if($fn1 and not -f "fonts/$fn1") { print "error: font 'fonts/$fn1' not found!\n"; exit; }
 if($fn2 and not -f "fonts/$fn2") { print "error: font 'fonts/$fn2' not found!\n"; exit; }
 if($fn3 and not -f "fonts/$fn3") { print "error: font 'fonts/$fn3' not found!\n"; exit; }
+if($fn4 and not -f "fonts/$fn4") { print "error: font 'fonts/$fn4' not found!\n"; exit; }
 
 my @tchars = split //, $title;
 my @achars = split //, $author;
@@ -80,6 +81,7 @@ my (@fns, %fonts);
 if($fn1) { push @fns, $fn1; $fonts{$fn1} = [$fs1_text, $fs1_comm]; }
 if($fn2) { push @fns, $fn2; $fonts{$fn2} = [$fs2_text, $fs2_comm]; }
 if($fn3) { push @fns, $fn3; $fonts{$fn3} = [$fs3_text, $fs3_comm]; }
+if($fn4) { push @fns, $fn4; $fonts{$fn4} = [$fs4_text, $fs4_comm]; }
 
 #正文、批注文字颜色
 my ($text_font_color, $comment_font_color) = ($book{'text_font_color'}, $book{'comment_font_color'});
@@ -244,6 +246,7 @@ my %vfonts;
 $vfonts{$fn1} = $vpdf->ttfont("fonts/$fn1", -noembed=>0, -nosubset=>1) if($fn1);
 $vfonts{$fn2} = $vpdf->ttfont("fonts/$fn2", -noembed=>0, -nosubset=>1) if($fn2);
 $vfonts{$fn3} = $vpdf->ttfont("fonts/$fn3", -noembed=>0, -nosubset=>1) if($fn3);
+$vfonts{$fn4} = $vpdf->ttfont("fonts/$fn4", -noembed=>0, -nosubset=>1) if($fn4);
 
 #添加PDF文档信息
 my $meta_title = $title;
@@ -542,7 +545,7 @@ foreach my $tid ($from..$to) {
 				my $fn = '';
 
 				$fn = get_font($char, \@fns);
-				if($fn ne $fn1 and defined $try_st and $try_st == 1) {
+				if($fn and $fn ne $fn1 and defined $try_st and $try_st == 1) {
 					my $try = try_st_trans($char);
 					if($try) { $char = $try; $fn = $fn1; }
 				}
@@ -571,6 +574,8 @@ foreach my $tid ($from..$to) {
 					@last = @{$pos_l[$pcnt]};
 				}
 				$fcolor = 'blue' if(defined $opts{'z'} and $fn ne $fn1);
+				#print "$char -> $fn\n";
+				$fy-= $fsize*0.2 if($fn eq 'DaMengHan-2.ttf');
 				$vpage->text()->textlabel($fx, $fy, $vfonts{$fn}, $fsize, $char, -rotate => $fdgrees, -color => $fcolor);
 				if($flag_tbook == 1) { #书名侧边线
 					my $pline = $vpage->gfx();
@@ -656,11 +661,13 @@ sub try_st_trans {
 		$char_s2t =~ s/\[\]//g;
 		$char_s2t = (split //, $char_s2t)[0];
 		$fn_s2t = get_font($char_s2t, \@fns);
+		#print "$char -> $char_s2t, $fn_s2t\n";
 	}
 	if($char_t2s) {
 		$char_t2s =~ s/\[\]//g;
 		$char_t2s = (split //, $char_t2s)[0];
 		$fn_t2s = get_font($char_t2s, \@fns);
+		#print "$char -> $char_t2s, $fn_t2s\n";
 	}
 	return $char_s2t if($fn_s2t eq $fn1);
 	return $char_t2s if($fn_t2s eq $fn1);

@@ -55,8 +55,8 @@ foreach my $tfn (sort readdir(TBADIR)) {
 	my ($content, @chars);
 	print "checking 'text_ba/$tfn' ... \n";
 	open TEXTBA, "< text_ba/$tfn";
-	{ local $/ = undef; $content = <TEXT>; }
-	close(TEXT);
+	{ local $/ = undef; $content = <TEXTBA>; }
+	close(TEXTBA);
 	$content = decode('utf-8', $content);
 	$content =~ s/\|//g;
 	@chars = split //, $content;
