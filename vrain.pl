@@ -1,4 +1,5 @@
 #!/usr/bin/perl
+#vRain中文古籍刻本风格直排电子书制作工具
 #by shanleiguang@gmail.com, 2025
 use strict;
 use warnings;
@@ -6,7 +7,6 @@ use warnings;
 use PDF::Builder;
 use Font::FreeType;
 use Encode::HanConvert;
-use Digest::MD5 qw(md5_base64);
 use Getopt::Std;
 use POSIX qw(strftime);
 use Encode;
@@ -29,16 +29,17 @@ my $book_id = $opts{'b'};
 my $from = $opts{'f'} ? $opts{'f'} : 1;
 my $to = $opts{'t'} ? $opts{'t'} : 1;
 
-if(not -d "books/$book_id") { print "error: dir 'books/$book_id' not found!\n"; exit; }
-if(not -d "books/$book_id/text" ) { print "error: dir 'books/$book_id/text' not found!\n"; exit; }
-if(not -f "books/$book_id/book.cfg") { print "error: 'books/$book_id/book.cfg' not found!\n"; exit; }
+if(not -d "books/$book_id") { print "错误：未发现该书籍目录'books/$book_id'！\n"; exit; }
+if(not -d "books/$book_id/text" ) { print "错误: 未发现该书籍文本目录'books/$book_id/text'！\n"; exit; }
+if(not -f "books/$book_id/book.cfg") { print "错误：未发现该书籍排版配置文件'books/$book_id/book.cfg'！\n"; exit; }
+
 print_welcome();
-if(defined $opts{'z'}) { print "注意：-z 测试模式，仅输出", $opts{'z'}, "页用于调测！\n"; }
+if(defined $opts{'z'}) { print "注意：-z 测试模式，仅输出", $opts{'z'}, "页用于调试排版参数！\n"; }
 
 #读取书籍配置文件
 my %book;
 open BCONFIG, "< books/$book_id/book.cfg";
-print "read 'books/$book_id/book.cfg'...\n";
+print "读取书籍排版配置文件'books/$book_id/book.cfg'...\n";
 while(<BCONFIG>) {
 	chomp;
 	next if(m/^\s{0,}$/);
@@ -63,16 +64,16 @@ my ($canvas_id, $row_num, $row_delta_y) = ($book{'canvas_id'}, $book{'row_num'},
 my ($fn1, $fn2, $fn3, $fn4) = ($book{'font1'}, $book{'font2'}, $book{'font3'}, $book{'font4'});
 my ($fs1_text, $fs2_text, $fs3_text, $fs4_text) = ($book{'text_font1_size'}, $book{'text_font2_size'}, $book{'text_font3_size'}, $book{'text_font4_size'});
 my ($fs1_comm, $fs2_comm, $fs3_comm, $fs4_comm) = ($book{'comment_font1_size'}, $book{'comment_font2_size'}, $book{'comment_font3_size'}, $book{'comment_font4_size'});
-my $try_st = $book{'try_st'};
+my $try_st = $book{'try_st'}; #是否进行简繁转换，有可能改善字体支持情况
 
-if(not $canvas_id) { print "error: 'canvas_id' not defined!\n"; exit; }
-if(not -f "canvas/$canvas_id.cfg") { print "error: canvas cfg file not found!\n"; exit; }
-if(not -f "canvas/$canvas_id.jpg") { print "error: canvas jpg file not found!\n"; exit; }
-if(not $fn1) { print "error: 'font1' not defined!\n"; exit; }
-if($fn1 and not -f "fonts/$fn1") { print "error: font 'fonts/$fn1' not found!\n"; exit; }
-if($fn2 and not -f "fonts/$fn2") { print "error: font 'fonts/$fn2' not found!\n"; exit; }
-if($fn3 and not -f "fonts/$fn3") { print "error: font 'fonts/$fn3' not found!\n"; exit; }
-if($fn4 and not -f "fonts/$fn4") { print "error: font 'fonts/$fn4' not found!\n"; exit; }
+if(not $canvas_id) { print "错误：未定义背景图ID 'canvas_id'！\n"; exit; }
+if(not -f "canvas/$canvas_id.cfg") { print "错误：未发现背景图cfg配置文件！\n"; exit; }
+if(not -f "canvas/$canvas_id.jpg") { print "错误：未发现背景图jpg图片文件！\n"; exit; }
+if(not $fn1) { print "错误：主字体'font1'未定义！\n"; exit; }
+if($fn1 and not -f "fonts/$fn1") { print "错误：未发现字体'fonts/$fn1'！\n"; exit; }
+if($fn2 and not -f "fonts/$fn2") { print "错误：未发现字体'fonts/$fn2'！\n"; exit; }
+if($fn3 and not -f "fonts/$fn3") { print "错误：未发现字体'fonts/$fn3'！\n"; exit; }
+if($fn4 and not -f "fonts/$fn4") { print "错误：未发现字体'fonts/$fn4'！\n"; exit; }
 
 my @tchars = split //, $title;
 my @achars = split //, $author;
@@ -118,7 +119,7 @@ my ($comment_comma_90_size, $comment_comma_90_x, $comment_comma_90_y) =
 #读取背景图配置文件
 my %canvas;
 open CCONFIG, "< canvas/$canvas_id.cfg";
-print "read 'canvas/$canvas_id.cfg'...\n";
+print "读取背景图配置文件'canvas/$canvas_id.cfg'...\n";
 while(<CCONFIG>) {
 	chomp;
 	next if(m/^\s{0,}$/);
@@ -161,11 +162,11 @@ my ($if_text000, $if_text999) = (0, 0); #是否存在用于保存前言及序的
 my @dats = ('');
 #读取书籍文本
 opendir TDIR, "books/$book_id/text";
-print "read 'books/$book_id/text/*.txt' ... ";
+print "读取该书籍全部文本文件'books/$book_id/text/*.txt'...";
 foreach my $tfn (sort readdir(TDIR)) {
 	next if($tfn =~ m/^\./);
 	next if($tfn !~ m/\.txt$/i);
-	$if_text000 = 1 if($tfn =~ /^0+\.txt$/i);
+	$if_text000 = 1 if($tfn =~ /^0+\.txt$/i); #是否存在000.txt文件，保存正文前的序言等文字
 	$if_text999 = 1 if($tfn eq '999.txt');
 	#读取文件，计算段落首尾需要补齐的空格
 	my $dat;
@@ -230,7 +231,7 @@ foreach my $tfn (sort readdir(TDIR)) {
 	close(TEXT);
 	push @dats, $dat;
 }
-print $#dats, " text files done\n";
+print $#dats, "个文本文件\n";
 close(TDIR);
 
 #去除字符串中的分隔符，用于后续模式匹配
@@ -252,7 +253,7 @@ $vfonts{$fn4} = $vpdf->ttfont("fonts/$fn4", -noembed=>0, -nosubset=>1) if($fn4);
 my $meta_title = $title;
 my $meta_author = $author;
 my $meta_creator = $logo_text;
-my $meta_producer = $software.$version.', 兀雨古籍刻本直排电子书制作工具';
+my $meta_producer = $software.$version.'，兀雨古籍刻本直排电子书制作工具';
 
 $vpdf->title($meta_title);
 $vpdf->author($meta_author);
@@ -263,11 +264,11 @@ $vpdf->mediabox($canvas_width, $canvas_height);
 
 #添加封面，封面图片不存在时添加简易封面
 if(-f "books/$book_id/cover.jpg") {
-	print "found '$book_id/boos/$book_id/cover.jpg ...\n";
+	print "发现封面图片'$book_id/boos/$book_id/cover.jpg ...\n";
 	my $cpimg = $vpdf->image("books/$book_id/cover.jpg");
 	$vpage->object($cpimg);
 } else {
-	print "not found '$book_id/boos/$book_id/cover.jpg, create simple cover page ...\n";
+	print "未发现封面文件'$book_id/boos/$book_id/cover.jpg，创建简易封面...\n";
 	my $pline = $vpage->gfx();
 	my $plx = $canvas_width/2;
 	$plx = $canvas_width if($canvas_width < $canvas_height);
@@ -313,7 +314,7 @@ my %outlines;
 my ($pid, $pcnt) = (0, 0); #非常重要：$pcnt，每页写入文字的当前标准字位指针
 my ($flag_tbook, $flag_rbook) = (0, 0); #正文、批注中书名号标记
 foreach my $tid ($from..$to) {
-	print "read the $tid"."th txt file in dir 'books/$book_id/text/' ...\n";
+	print "读取'books/$book_id/text/'目录下第 $tid "."个文本文件...\n";
 	my $dat = $dats[$tid];
 	my @chars = split //, $dat;
 	my $chars_num = $#chars+1; #需要处理的总字符数
@@ -340,7 +341,7 @@ foreach my $tid ($from..$to) {
 	if($tptitle) {
 		$outlines{$tptitle} = $pid+2 if(not $outlines{$tptitle});
 	}
-	print "creat new page [$pid] ... \n";
+	print "创建新PDF页[$pid]...\n";
 	$vpage = $vpdf->page();
 	$vpage->object($vpimg, 0, 0); #添加背景图
 
@@ -407,7 +408,7 @@ foreach my $tid ($from..$to) {
                 }
             }
             last if(not scalar @chars); #所有字符处理完时退出While循环
-			print "creat new page [$pid] ... \n";
+			print "创建新PDF页[$pid]...\n";
 			$vpage = $vpdf->page(); #新页
 			$vpage->object($vpimg, 0, 0);
 			foreach my $i (0..$#tpchars) {
@@ -627,9 +628,9 @@ if(defined $title_directory and $title_directory == 1) {
 my $pdfn = "《$title》文本$from"."至$to";
 
 $pdfn = $pdfn.'_test' if($opts{'z'});
-print "save to 'books/$book_id/$pdfn.pdf' ... ";
+print "写入PDF文件'books/$book_id/$pdfn.pdf'...";
 $vpdf->save("books/$book_id/$pdfn.pdf");
-print "done\n";
+print "完成！\n";
 
 sub print_welcome {
 	print '-'x60, "\n";
