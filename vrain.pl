@@ -4,6 +4,7 @@
 use strict;
 use warnings;
 
+use CAM::PDF;
 use PDF::Builder;
 use Font::FreeType;
 use Encode::HanConvert;
@@ -22,7 +23,7 @@ my $version = 'v1.2';
 #程序输入参数设置
 my %opts;
 
-getopts('hvz:b:c:f:t:', \%opts);
+getopts('chvz:b:c:f:t:', \%opts);
 if(defined $opts{'h'}) { print_help(); exit; }
 
 my $book_id = $opts{'b'};
@@ -576,7 +577,7 @@ foreach my $tid ($from..$to) {
 				}
 				$fcolor = 'blue' if(defined $opts{'z'} and $fn ne $fn1);
 				#print "$char -> $fn\n";
-				$fy-= $fsize*0.2 if($fn eq 'DaMengHan-2.ttf');
+				#$fy-= $fsize*0.2 if($fn eq 'DaMengHan-2.ttf');
 				$vpage->text()->textlabel($fx, $fy, $vfonts{$fn}, $fsize, $char, -rotate => $fdgrees, -color => $fcolor);
 				if($flag_tbook == 1) { #书名侧边线
 					my $pline = $vpage->gfx();
@@ -628,9 +629,21 @@ if(defined $title_directory and $title_directory == 1) {
 my $pdfn = "《$title》文本$from"."至$to";
 
 $pdfn = $pdfn.'_test' if($opts{'z'});
-print "写入PDF文件'books/$book_id/$pdfn.pdf'...";
+print "生成PDF文件'books/$book_id/$pdfn.pdf'...";
 $vpdf->save("books/$book_id/$pdfn.pdf");
 print "完成！\n";
+
+if($^O =~ m/darwin/i) {
+	my $input = "books/$book_id/$pdfn.pdf";
+	my $output = "books/$book_id/$pdfn".'_已压缩.pdf';
+	print "'压缩PDF文件'$output'...";
+	`gs -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dPDFSETTINGS=/screen -dNOPAUSE -dQUIET -dBATCH -sOutputFile=$output $input`;
+	`rm $input`;
+	print "完成！\n";
+	my $pdf = CAM::PDF->new($output);
+	$pdf->setPrefs('vrain', 'vrain');
+	$pdf->save();
+}
 
 sub print_welcome {
 	print '-'x60, "\n";
