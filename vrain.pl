@@ -4,7 +4,6 @@
 use strict;
 use warnings;
 
-use CAM::PDF;
 use PDF::Builder;
 use Font::FreeType;
 use Encode::HanConvert;
@@ -23,7 +22,7 @@ my $version = 'v1.2';
 #程序输入参数设置
 my %opts;
 
-getopts('chvz:b:c:f:t:', \%opts);
+getopts('hcvz:b:f:t:', \%opts);
 if(defined $opts{'h'}) { print_help(); exit; }
 
 my $book_id = $opts{'b'};
@@ -63,6 +62,7 @@ close(BCONFIG);
 my ($author, $title) = ($book{'author'}, $book{'title'});
 my ($canvas_id, $row_num, $row_delta_y) = ($book{'canvas_id'}, $book{'row_num'}, $book{'row_delta_y'});
 my ($fn1, $fn2, $fn3, $fn4) = ($book{'font1'}, $book{'font2'}, $book{'font3'}, $book{'font4'});
+my ($fnr1, $fnr2, $fnr3, $fnr4) = ($book{'font1_rotate'}, $book{'font2_rotate'}, $book{'font3_rotate'}, $book{'font4_rotate'});
 my ($fs1_text, $fs2_text, $fs3_text, $fs4_text) = ($book{'text_font1_size'}, $book{'text_font2_size'}, $book{'text_font3_size'}, $book{'text_font4_size'});
 my ($fs1_comm, $fs2_comm, $fs3_comm, $fs4_comm) = ($book{'comment_font1_size'}, $book{'comment_font2_size'}, $book{'comment_font3_size'}, $book{'comment_font4_size'});
 my $try_st = $book{'try_st'}; #是否进行简繁转换，有可能改善字体支持情况
@@ -80,10 +80,10 @@ my @tchars = split //, $title;
 my @achars = split //, $author;
 my (@fns, %fonts);
 
-if($fn1) { push @fns, $fn1; $fonts{$fn1} = [$fs1_text, $fs1_comm]; }
-if($fn2) { push @fns, $fn2; $fonts{$fn2} = [$fs2_text, $fs2_comm]; }
-if($fn3) { push @fns, $fn3; $fonts{$fn3} = [$fs3_text, $fs3_comm]; }
-if($fn4) { push @fns, $fn4; $fonts{$fn4} = [$fs4_text, $fs4_comm]; }
+if($fn1) { push @fns, $fn1; $fonts{$fn1} = [$fs1_text, $fs1_comm, $fnr1]; }
+if($fn2) { push @fns, $fn2; $fonts{$fn2} = [$fs2_text, $fs2_comm, $fnr2]; }
+if($fn3) { push @fns, $fn3; $fonts{$fn3} = [$fs3_text, $fs3_comm, $fnr3]; }
+if($fn4) { push @fns, $fn4; $fonts{$fn4} = [$fs4_text, $fs4_comm, $fnr4]; }
 
 #正文、批注文字颜色
 my ($text_font_color, $comment_font_color) = ($book{'text_font_color'}, $book{'comment_font_color'});
@@ -466,7 +466,7 @@ foreach my $tid ($from..$to) {
 				}
 				if(not $fn) { $rc = '□'; $fn = get_font($rc, \@fns); }
 
-				my ($fsize, $fcolor, $fdgrees) = ($fonts{$fn}->[1], $comment_font_color, 0);
+				my ($fsize, $fcolor, $fdgrees) = ($fonts{$fn}->[1], $comment_font_color, $fonts{$fn}->[2]);
 				my ($fx, $fy);
 
 				print "\t[$pid/$pcnt] $rc -> $fn\n" if(defined $opts{'v'});
@@ -553,7 +553,7 @@ foreach my $tid ($from..$to) {
 				}
 				if(not $fn) { $char = '□'; $fn = get_font($char, \@fns); }
 
-				my ($fsize, $fcolor, $fdgrees)  = ($fonts{$fn}->[0], $text_font_color, 0);
+				my ($fsize, $fcolor, $fdgrees)  = ($fonts{$fn}->[0], $text_font_color, $fonts{$fn}->[2]);
 				my ($fx, $fy) = @{$pos_l[$pcnt]};
 
 				print "[$pid/$pcnt] $char -> $fn\n" if(defined $opts{'v'});
@@ -598,7 +598,7 @@ foreach my $tid ($from..$to) {
 							$fx+= $cw*$text_comma_nop_x;
 							$fy-= $rh*$text_comma_nop_y;
 							if($fy-$margins_bottom < 10) { $fy = $margins_bottom+10; }
-							$vpage->text->textlabel($fx, $fy, $vfonts{$fn1}, $fsize, $char, -color => $fcolor);
+							$vpage->text->textlabel($fx, $fy, $vfonts{$fn1}, $fsize, $char, -rotate => $fdgrees, -color => $fcolor);
 						} else {
 							unshift @chars, $char; #占位字符放回字符串数组头部，放到新页
 						}
@@ -633,16 +633,18 @@ print "生成PDF文件'books/$book_id/$pdfn.pdf'...";
 $vpdf->save("books/$book_id/$pdfn.pdf");
 print "完成！\n";
 
-if($^O =~ m/darwin/i) {
+if(defined $opts{'c'}) {
 	my $input = "books/$book_id/$pdfn.pdf";
 	my $output = "books/$book_id/$pdfn".'_已压缩.pdf';
-	print "'压缩PDF文件'$output'...";
-	`gs -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dPDFSETTINGS=/screen -dNOPAUSE -dQUIET -dBATCH -sOutputFile=$output $input`;
-	`rm $input`;
-	print "完成！\n";
-	my $pdf = CAM::PDF->new($output);
-	$pdf->setPrefs('vrain', 'vrain');
-	$pdf->save();
+
+	if($^O =~ m/darwin/i) {
+		print "压缩PDF文件'$output'...";
+		`gs -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dPDFSETTINGS=/screen -dNOPAUSE -dQUIET -dBATCH -sOutputFile=$output $input`;
+		`rm $input`;
+		print "完成！\n";
+	}
+} else {
+	print "建议：使用'-c'参数对PDF文件进行压缩！\n"
 }
 
 sub print_welcome {
@@ -657,6 +659,7 @@ sub print_help {
    ./$software\t$version，兀雨古籍刻本直排电子书制作工具
 	-h\t帮助信息
 	-v\t显示更多信息
+	-c\t压缩PDF（MacOS）
 	-z\t测试模式，仅输出指定页数，生成带test标识的PDF文件，用于调试参数
 	-b\t书籍ID
 	  \t书籍文本需保存在书籍ID的text目录下，多文本时采用001、002...不间断命名以确保顺序处理
