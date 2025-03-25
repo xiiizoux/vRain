@@ -451,11 +451,11 @@ foreach my $tid ($from..$to) {
 			while(my $rc = shift @rchars) {
 				if($rc eq '《') {
 					$flag_rbook = 1;
-					next;
+					next if(defined $if_book_vline and $if_book_vline == 1);
 				}
 				if($rc eq '》') {
 					$flag_rbook = 0;
-					next;
+					next if(defined $if_book_vline and $if_book_vline == 1);
 				}
 				my $fn = '';
 
@@ -493,15 +493,17 @@ foreach my $tid ($from..$to) {
 				}
 				$fcolor = 'blue' if(defined $opts{'z'} and $fn ne $fn1);
 				$vpage->text()->textlabel($fx, $fy, $vfonts{$fn}, $fsize, $rc, -rotate => $fdgrees, -color => $fcolor);
-				if($flag_rbook == 1) { #书名侧边线
-					my $pline = $vpage->gfx();
-					my $ply = $fy+$rh*0.7;
-					$ply = $canvas_height-$margins_top-5 if($ply >= $canvas_height-$margins_top);
-					$pline->linewidth(1);
-					$pline->strokecolor($fcolor);
-					$pline->move($fx-1, $fy-$rh*0.3);
-					$pline->line($fx-1, $fy-$rh*0.3, $fx-1, $ply);
-					$pline->stroke();
+				if(defined $if_book_vline and $if_book_vline == 1) {
+					if($flag_rbook == 1) { #书名侧边线
+						my $pline = $vpage->gfx();
+						my $ply = $fy+$rh*0.7;
+						$ply = $canvas_height-$margins_top-5 if($ply >= $canvas_height-$margins_top);
+						$pline->linewidth(1);
+						$pline->strokecolor($fcolor);
+						$pline->move($fx-1, $fy-$rh*0.3);
+						$pline->line($fx-1, $fy-$rh*0.3, $fx-1, $ply);
+						$pline->stroke();
+					}
 				}
 			}
 			#print $pcnt, "\n"; #有效断点
@@ -526,11 +528,11 @@ foreach my $tid ($from..$to) {
 		}
 		if($char eq '《') {
 			$flag_tbook = 1;
-			next;
+			next if(defined $if_book_vline and $if_book_vline == 1);
 		}
 		if($char eq '》') {
 			$flag_tbook = 0;
-			next;
+			next if(defined $if_book_vline and $if_book_vline == 1);
 		}
 		#注意：原始文本中的标注文本需严格使用【】区别
 		if($char eq '【') {
@@ -579,15 +581,17 @@ foreach my $tid ($from..$to) {
 				#print "$char -> $fn\n";
 				#$fy-= $fsize*0.2 if($fn eq 'DaMengHan-2.ttf');
 				$vpage->text()->textlabel($fx, $fy, $vfonts{$fn}, $fsize, $char, -rotate => $fdgrees, -color => $fcolor);
-				if($flag_tbook == 1) { #书名侧边线
-					my $pline = $vpage->gfx();
-					my $ply = $fy+$rh*0.7;
-					$ply = $canvas_height-$margins_top-5 if($ply >= $canvas_height-$margins_top);
-					$pline->linewidth(2);
-					$pline->strokecolor($fcolor);
-					$pline->move($fx, $fy-$rh*0.3);
-					$pline->line($fx-2, $fy-$rh*0.3, $fx-2, $ply);
-					$pline->stroke();
+				if(defined $if_book_vline and $if_book_vline == 1) {
+					if($flag_tbook == 1) { #书名侧边线
+						my $pline = $vpage->gfx();
+						my $ply = $fy+$rh*0.7;
+						$ply = $canvas_height-$margins_top-5 if($ply >= $canvas_height-$margins_top);
+						$pline->linewidth(2);
+						$pline->strokecolor($fcolor);
+						$pline->move($fx, $fy-$rh*0.3);
+						$pline->line($fx-2, $fy-$rh*0.3, $fx-2, $ply);
+						$pline->stroke();
+					}
 				}
 				if($pcnt == $page_chars_num) {
 					if(scalar @chars) {
