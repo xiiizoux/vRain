@@ -39,3 +39,7 @@
 # ChangeLog
 
 - 2025/3，新增宣纸做旧风格背景图生成脚本；新增竹简风格背景图生成脚本；新增原始文本字符字体支持情况检测及替换脚本；新增批量插图脚本；新增用于整段缩进排版的文本预处理脚本；新增生成PDF压缩代码，压缩比约30倍。
+
+# Buy me a coffee
+
+![image](https://github.com/shanleiguang/vYinn/blob/main/qcode.png)
