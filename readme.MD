@@ -9,7 +9,15 @@
 - 一个背景图对应一个配置文件。一本书对应一个配置文件。
 - 百万字书籍十几分钟生成。
 - 采用Perl语言开发，需安装Image::Magick和PDF::Builder等模块。
-- 个人小红书主页：兀雨书屋。
+- 小红书主页：兀雨书屋。
+
+- vRain is a Chinese classical ancient text-style ebook production tool for readers.
+- Referencing the production process of Chinese ancient books, it first generates a background image for the pages, and creates a position array that maps from right to left and top to bottom based on the number of lines and characters perline. Then, prints the text character by character to the corresponding positions, filling one page, creating a new page, until all text is processed.
+- Text editing preparation is separated from automatic typesetting generation, allowing users to focus mainly on text editing preparation.
+- One background image corresponds to one configuration file. One book corresponds to one configuration file.
+- Books with millions of characters can be generated in just a few minutes.
+- Developed using Perl language, it requires the installation of modules like Image::Magick and PDF::Builder.
+- RedNote: 兀雨书屋.
 
 # Example
 
@@ -39,7 +47,3 @@
 # ChangeLog
 
 - 2025/3，新增宣纸做旧风格背景图生成脚本；新增竹简风格背景图生成脚本；新增原始文本字符字体支持情况检测及替换脚本；新增批量插图脚本；新增用于整段缩进排版的文本预处理脚本；新增生成PDF压缩代码，压缩比约30倍。
-
-# Buy me a coffee
-
-![image](https://github.com/shanleiguang/vYinn/blob/main/qcode.png)
