@@ -1,0 +1,72 @@
+# Git相关
+.git
+.gitignore
+.gitattributes
+
+# Docker相关
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# 文档
+README.md
+readme.MD
+*.md
+
+# 临时文件
+*.tmp
+*.log
+*.bak
+*~
+
+# 编辑器文件
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 输出文件（保留源文件，排除生成的PDF）
+books/*/《*.pdf
+books/*/*.pdf
+output/
+
+# 备份目录
+books/*/text_ba/
+books/*/tmp/
+
+# 工具生成的临时文件
+tools/*.tmp
+books/*/replace.tmp
+books/*/replace.txt
+
+# 缓存目录
+.cache/
+cache/
+
+# WebUI相关
+webui/frontend/node_modules/
+webui/backend/node_modules/
+webui/frontend/.vite/
+webui/backend/.env
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# 环境变量文件
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+
+# 测试文件
+test/
+tests/
+*.test.*
+*.spec.*
+coverage/
+.nyc_output/

@@ -1,0 +1,72 @@
+version: '3.8'
+
+networks:
+  vrain-network:
+    driver: bridge
+
+services:
+  # vRain 集成服务 - 包含核心功能和WebUI
+  vrain:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: vrain-app
+    restart: unless-stopped
+    ports:
+      # WebUI访问端口
+      - "3012:3012"
+    volumes:
+      # 挂载书籍目录，便于输入输出
+      - ./books:/app/books
+      # 挂载字体目录
+      - ./fonts:/app/fonts
+      # 挂载背景图目录
+      - ./canvas:/app/canvas
+      # 挂载工具目录
+      - ./tools:/app/tools
+      # 挂载输出目录到宿主机
+      - ./output:/app/output
+      # 挂载日志目录
+      - ./logs:/app/logs
+    environment:
+      - LANG=C.UTF-8
+      - LC_ALL=C.UTF-8
+      - NODE_ENV=production
+      - WEBUI_PORT=3001
+      - NGINX_PORT=3012
+      - VRAIN_ROOT=/app
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3012/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - vrain-network
+
+  # 背景图生成服务（独立容器，用于专门的背景图生成任务）
+  canvas:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: vrain-canvas
+    restart: unless-stopped
+    volumes:
+      - ./canvas:/app/canvas
+      - ./fonts:/app/fonts
+      - ./output:/app/output
+      - ./books:/app/books
+      - ./logs:/app/logs
+    working_dir: /app/canvas
+    environment:
+      - LANG=C.UTF-8
+      - LC_ALL=C.UTF-8
+    # 专门用于背景图生成，保持运行状态
+    command: ["tail", "-f", "/dev/null"]
+    healthcheck:
+      test: ["CMD", "ls", "/app/canvas"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - vrain-network

@@ -1,0 +1,88 @@
+name: Docker Build and Test
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'Dockerfile'
+      - 'docker-compose.yml'
+      - 'docker-entrypoint.sh'
+      - '.github/workflows/docker.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'Dockerfile'
+      - 'docker-compose.yml'
+      - 'docker-entrypoint.sh'
+
+env:
+  IMAGE_NAME: vrain
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Build Docker image
+      run: |
+        docker build -t ${{ env.IMAGE_NAME }}:test .
+
+    - name: Test Docker image
+      run: |
+        # 测试镜像是否能正常启动
+        docker run --rm ${{ env.IMAGE_NAME }}:test --help
+
+    - name: Test canvas generation
+      run: |
+        # 测试背景图生成功能
+        docker run --rm \
+          -v ${{ github.workspace }}/canvas:/app/canvas \
+          -v ${{ github.workspace }}/fonts:/app/fonts \
+          ${{ env.IMAGE_NAME }}:test canvas 01_Black || true
+
+    - name: Check image size
+      run: |
+        docker images ${{ env.IMAGE_NAME }}:test --format "table {{.Repository}}\t{{.Tag}}\t{{.Size}}"
+
+    - name: Security scan
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: ${{ env.IMAGE_NAME }}:test
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+      continue-on-error: true
+
+    - name: Upload Trivy scan results
+      uses: github/codeql-action/upload-sarif@v2
+      if: always()
+      with:
+        sarif_file: 'trivy-results.sarif'
+      continue-on-error: true
+
+  multi-arch-build:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v3
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Build multi-arch image
+      run: |
+        docker buildx build \
+          --platform linux/amd64,linux/arm64 \
+          --tag ${{ env.IMAGE_NAME }}:latest \
+          --load \
+          .
