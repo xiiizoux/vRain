@@ -6,8 +6,8 @@ WORKDIR /app/webui/frontend
 # 复制前端package文件
 COPY webui/frontend/package*.json ./
 
-# 安装前端依赖
-RUN npm ci --only=production
+# 安装前端依赖（包括开发依赖，用于构建）
+RUN npm ci
 
 # 复制前端源代码
 COPY webui/frontend/ ./
@@ -40,6 +40,8 @@ RUN apk add --no-cache \
     nginx \
     nodejs \
     npm \
+    ca-certificates \
+    tzdata \
     && apk add --no-cache --virtual .build-deps \
     # 构建时依赖
     perl-dev \
@@ -55,20 +57,47 @@ RUN apk add --no-cache \
     libpng-dev \
     jpeg-dev \
     libjpeg-turbo-dev \
-    pkgconfig \
-    # 安装Perl模块
-    && cpanm --notest --no-man-pages \
+    pkgconf \
+    wget \
+    git \
+    # 安装Perl模块（按依赖顺序安装）
+    && echo "安装Perl模块..." \
+    && cpanm --notest --no-man-pages --verbose \
+        Module::Build \
+        ExtUtils::MakeMaker \
+        Test::More \
+        File::Which \
+        Alien::Base \
+        Alien::Build \
         PDF::Builder \
         Font::FreeType \
         Encode::HanConvert \
+        Image::Magick \
+        POSIX \
+        Getopt::Std \
+        Encode \
+    # 验证Perl模块安装
+    && echo "验证Perl模块安装..." \
+    && perl -e "use PDF::Builder; print 'PDF::Builder OK\n';" \
+    && perl -e "use Font::FreeType; print 'Font::FreeType OK\n';" \
+    && perl -e "use Encode::HanConvert; print 'Encode::HanConvert OK\n';" \
+    && perl -e "use Image::Magick; print 'Image::Magick OK\n';" \
+    && perl -e "use Getopt::Std; print 'Getopt::Std OK\n';" \
+    && perl -e "use Encode; print 'Encode OK\n';" \
+    && perl -e "use POSIX; print 'POSIX OK\n';" \
     # 清理构建依赖和缓存
     && apk del .build-deps \
     && rm -rf /var/cache/apk/* \
-    && rm -rf /root/.cpanm
+    && rm -rf /root/.cpanm \
+    && rm -rf /tmp/*
 
 # 配置ImageMagick安全策略（允许PDF处理）
 RUN sed -i 's/rights="none" pattern="PDF"/rights="read|write" pattern="PDF"/' /etc/ImageMagick-7/policy.xml || \
     sed -i 's/rights="none" pattern="PDF"/rights="read|write" pattern="PDF"/' /etc/ImageMagick-6/policy.xml || true
+
+# 复制依赖验证脚本
+COPY docker/verify-dependencies.sh /tmp/verify-dependencies.sh
+RUN chmod +x /tmp/verify-dependencies.sh
 
 # 复制项目文件
 COPY . .
@@ -96,6 +125,9 @@ RUN mkdir -p /app/output \
     && mkdir -p /app/logs/webui \
     && mkdir -p /var/log/nginx \
     && mkdir -p /var/lib/nginx/tmp
+
+# 运行依赖验证
+RUN /tmp/verify-dependencies.sh && rm /tmp/verify-dependencies.sh
 
 # 配置nginx
 COPY docker/nginx.conf /etc/nginx/nginx.conf

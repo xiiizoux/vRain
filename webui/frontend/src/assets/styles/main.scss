@@ -116,7 +116,7 @@
     border-color: var(--vrain-primary-color);
     
     &:hover {
-      background: lighten(var(--vrain-primary-color), 10%);
+      background: var(--el-color-primary-light-3);
     }
   }
 }

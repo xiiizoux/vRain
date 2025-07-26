@@ -14,6 +14,7 @@ RUN apk add --no-cache \
     make \
     gcc \
     g++ \
+    imagemagick \
     imagemagick-dev \
     freetype-dev \
     fontconfig-dev \
@@ -21,14 +22,34 @@ RUN apk add --no-cache \
     libpng-dev \
     jpeg-dev \
     libjpeg-turbo-dev \
-    pkgconfig
+    pkgconfig \
+    git \
+    wget \
+    ca-certificates
 
 # 安装Perl模块到临时目录
-RUN mkdir -p /tmp/perl-modules
-RUN cpanm --notest --no-man-pages --local-lib /tmp/perl-modules \
-    PDF::Builder \
-    Font::FreeType \
-    Encode::HanConvert
+RUN mkdir -p /tmp/perl-modules \
+    && echo "安装Perl模块..." \
+    && cpanm --notest --no-man-pages --local-lib /tmp/perl-modules --verbose \
+        Module::Build \
+        ExtUtils::MakeMaker \
+        Test::More \
+        File::Which \
+        Alien::Base \
+        Alien::Build \
+        PDF::Builder \
+        Font::FreeType \
+        Encode::HanConvert \
+        Image::Magick \
+        POSIX \
+        Getopt::Std \
+        Encode \
+    # 验证Perl模块安装
+    && echo "验证Perl模块安装..." \
+    && PERL5LIB=/tmp/perl-modules/lib/perl5 perl -e "use PDF::Builder; print 'PDF::Builder OK\n';" \
+    && PERL5LIB=/tmp/perl-modules/lib/perl5 perl -e "use Font::FreeType; print 'Font::FreeType OK\n';" \
+    && PERL5LIB=/tmp/perl-modules/lib/perl5 perl -e "use Encode::HanConvert; print 'Encode::HanConvert OK\n';" \
+    && PERL5LIB=/tmp/perl-modules/lib/perl5 perl -e "use Image::Magick; print 'Image::Magick OK\n';"
 
 # 运行时阶段
 FROM alpine:3.19
@@ -50,6 +71,9 @@ RUN apk add --no-cache \
     fontconfig \
     ghostscript \
     bash \
+    curl \
+    ca-certificates \
+    tzdata \
     && rm -rf /var/cache/apk/*
 
 # 从构建阶段复制Perl模块

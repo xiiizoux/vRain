@@ -44,10 +44,20 @@ export default defineConfig({
     sourcemap: false,
     rollupOptions: {
       output: {
-        manualChunks: {
-          'element-plus': ['element-plus'],
-          'vue-vendor': ['vue', 'vue-router', 'pinia'],
-          'utils': ['axios', 'dayjs', 'lodash-es']
+        manualChunks(id) {
+          // 将 node_modules 中的包分组
+          if (id.includes('node_modules')) {
+            if (id.includes('element-plus')) {
+              return 'element-plus'
+            }
+            if (id.includes('vue') || id.includes('pinia') || id.includes('@vue')) {
+              return 'vue-vendor'
+            }
+            if (id.includes('axios') || id.includes('dayjs') || id.includes('lodash')) {
+              return 'utils'
+            }
+            return 'vendor'
+          }
         }
       }
     }

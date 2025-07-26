@@ -20,8 +20,7 @@
     "socket.io-client": "^4.7.4",
     "dayjs": "^1.11.10",
     "lodash-es": "^4.17.21",
-    "monaco-editor": "^0.45.0",
-    "vue-monaco-editor": "^1.0.10"
+    "monaco-editor": "^0.45.0"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^4.5.2",

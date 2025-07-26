@@ -2,6 +2,39 @@
 
 本文档介绍如何使用Docker运行vRain中文古籍刻本风格电子书制作工具的生产环境。
 
+## 📋 构建要求
+
+在开始之前，请确保您的系统满足以下要求：
+
+- Docker 20.10+
+- Docker Compose 2.0+
+- 至少 4GB 可用内存
+- 至少 10GB 可用磁盘空间
+- 稳定的网络连接（用于下载依赖）
+
+## 🔨 首次构建
+
+如果这是您第一次构建vRain Docker镜像，建议使用构建测试脚本：
+
+```bash
+# 给脚本执行权限
+chmod +x docker/build-test.sh
+
+# 运行完整构建测试（推荐）
+./docker/build-test.sh
+
+# 或仅测试构建
+./docker/build-test.sh --build-only
+```
+
+构建测试脚本会：
+- 验证所有系统依赖
+- 检查Perl模块安装
+- 测试基本功能
+- 验证WebUI组件
+
+如果遇到构建问题，请参考 [DOCKER_BUILD_GUIDE.md](DOCKER_BUILD_GUIDE.md) 获取详细的故障排除指南。
+
 ## 🚀 一键启动生产环境
 
 ### 最简单的方式

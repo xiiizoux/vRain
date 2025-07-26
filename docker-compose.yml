@@ -10,6 +10,9 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        - BUILDKIT_INLINE_CACHE=1
+    image: vrain:latest
     container_name: vrain-app
     restart: unless-stopped
     ports:
@@ -17,17 +20,17 @@ services:
       - "3012:3012"
     volumes:
       # 挂载书籍目录，便于输入输出
-      - ./books:/app/books
+      - ./books:/app/books:rw
       # 挂载字体目录
-      - ./fonts:/app/fonts
+      - ./fonts:/app/fonts:ro
       # 挂载背景图目录
-      - ./canvas:/app/canvas
+      - ./canvas:/app/canvas:rw
       # 挂载工具目录
-      - ./tools:/app/tools
+      - ./tools:/app/tools:ro
       # 挂载输出目录到宿主机
-      - ./output:/app/output
+      - ./output:/app/output:rw
       # 挂载日志目录
-      - ./logs:/app/logs
+      - ./logs:/app/logs:rw
     environment:
       - LANG=C.UTF-8
       - LC_ALL=C.UTF-8
@@ -35,38 +38,55 @@ services:
       - WEBUI_PORT=3001
       - NGINX_PORT=3012
       - VRAIN_ROOT=/app
+      - TZ=Asia/Shanghai
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3012/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:3012/health", "||", "exit", "1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - vrain-network
+    depends_on: []
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # 背景图生成服务（独立容器，用于专门的背景图生成任务）
+  canvas:
+    build:
+      context: .
+      dockerfile: Dockerfile.alpine
+      args:
+        - BUILDKIT_INLINE_CACHE=1
+    image: vrain-canvas:latest
+    container_name: vrain-canvas
+    restart: unless-stopped
+    volumes:
+      - ./canvas:/app/canvas:rw
+      - ./fonts:/app/fonts:ro
+      - ./output:/app/output:rw
+      - ./books:/app/books:ro
+      - ./logs:/app/logs:rw
+    working_dir: /app/canvas
+    environment:
+      - LANG=C.UTF-8
+      - LC_ALL=C.UTF-8
+      - TZ=Asia/Shanghai
+    # 专门用于背景图生成，保持运行状态
+    command: ["tail", "-f", "/dev/null"]
+    healthcheck:
+      test: ["CMD", "test", "-d", "/app/canvas", "&&", "test", "-x", "/app/canvas/canvas.pl"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 30s
     networks:
       - vrain-network
-
-  # 背景图生成服务（独立容器，用于专门的背景图生成任务）
-  canvas:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: vrain-canvas
-    restart: unless-stopped
-    volumes:
-      - ./canvas:/app/canvas
-      - ./fonts:/app/fonts
-      - ./output:/app/output
-      - ./books:/app/books
-      - ./logs:/app/logs
-    working_dir: /app/canvas
-    environment:
-      - LANG=C.UTF-8
-      - LC_ALL=C.UTF-8
-    # 专门用于背景图生成，保持运行状态
-    command: ["tail", "-f", "/dev/null"]
-    healthcheck:
-      test: ["CMD", "ls", "/app/canvas"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-    networks:
-      - vrain-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"

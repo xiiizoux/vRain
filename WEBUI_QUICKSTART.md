@@ -144,7 +144,6 @@ make restart
 
 - [WebUI详细使用指南](webui/WEBUI_GUIDE.md)
 - [Docker部署文档](docker-README.md)
-- [生产环境指南](PRODUCTION_GUIDE.md)
 
 ## 🎉 开始使用
 
