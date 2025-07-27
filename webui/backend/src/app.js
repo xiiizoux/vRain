@@ -62,9 +62,9 @@ const limiter = rateLimit({
 app.use('/api', limiter)
 
 // 静态文件服务
-app.use('/static', express.static(path.join(__dirname, '../../..', 'output')))
-app.use('/books', express.static(path.join(__dirname, '../../..', 'books')))
-app.use('/canvas', express.static(path.join(__dirname, '../../..', 'canvas')))
+app.use('/static/output', express.static(path.join(__dirname, '../../..', 'output')))
+app.use('/static/books', express.static(path.join(__dirname, '../../..', 'books')))
+app.use('/static/canvas', express.static(path.join(__dirname, '../../..', 'canvas')))
 
 // API路由
 app.use('/api/books', booksRouter)

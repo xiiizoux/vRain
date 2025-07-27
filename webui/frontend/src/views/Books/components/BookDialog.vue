@@ -174,7 +174,23 @@ watch(() => props.book, (newBook) => {
   } else {
     resetForm()
   }
-}, { immediate: true })
+})
+
+// 监听对话框显示状态，在显示时初始化表单
+watch(() => props.modelValue, (visible) => {
+  if (visible && props.book) {
+    form.value = {
+      id: props.book.id || '',
+      title: props.book.title || '',
+      author: props.book.author || '',
+      description: props.book.description || '',
+      canvas_id: props.book.canvas_id || '01_Black',
+      row_num: props.book.row_num || 24
+    }
+  } else if (visible && !props.book) {
+    resetForm()
+  }
+})
 
 // 方法
 const resetForm = () => {

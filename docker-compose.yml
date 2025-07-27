@@ -19,18 +19,18 @@ services:
       # WebUI访问端口
       - "3012:3012"
     volumes:
-      # 挂载书籍目录，便于输入输出
+      # 挂载书籍目录，便于输入输出（原项目数据）
       - ./books:/app/books:rw
-      # 挂载字体目录
+      # 挂载字体目录（原项目资源）
       - ./fonts:/app/fonts:ro
-      # 挂载背景图目录
+      # 挂载背景图目录（原项目资源）
       - ./canvas:/app/canvas:rw
-      # 挂载工具目录
+      # 挂载工具目录（原项目资源）
       - ./tools:/app/tools:ro
-      # 挂载输出目录到宿主机
-      - ./output:/app/output:rw
-      # 挂载日志目录
+      # 挂载日志目录（用于调试和监控）
       - ./logs:/app/logs:rw
+      # 注意：不挂载 output 目录，因为输出统一使用 books/ 目录
+      # 注意：不挂载 webui 目录，避免覆盖容器内的构建文件
     environment:
       - LANG=C.UTF-8
       - LC_ALL=C.UTF-8

@@ -124,6 +124,7 @@
 <script setup>
 import { ref, reactive, computed } from 'vue'
 import { ElMessage } from 'element-plus'
+import { booksApi } from '@/utils/api'
 
 const props = defineProps({
   modelValue: {
@@ -212,18 +213,30 @@ const handleGenerate = async () => {
       ElMessage.warning('请选择至少一种输出格式')
       return
     }
-    
+
     if (!options.canvasId) {
       ElMessage.warning('请选择背景图模板')
       return
     }
-    
+
     generating.value = true
-    
-    // 模拟生成过程
-    await new Promise(resolve => setTimeout(resolve, 2000))
-    
-    ElMessage.success('生成任务已启动')
+
+    // 构建生成参数
+    const generateOptions = {
+      from: options.pageRange === 'custom' ? options.startPage : 1,
+      to: options.pageRange === 'custom' ? options.endPage : undefined,
+      compress: options.formats.includes('pdf') && options.quality !== 'low',
+      verbose: true
+    }
+
+    // 调用生成API
+    const apiCall = options.type === 'preview'
+      ? () => booksApi.previewBook(props.book?.id, { pages: 5, ...generateOptions })
+      : () => booksApi.generateBook(props.book?.id, generateOptions)
+
+    await apiCall()
+
+    ElMessage.success(options.type === 'preview' ? '预览任务已启动' : '生成任务已启动')
     emit('success', {
       bookId: props.book?.id,
       options: { ...options }

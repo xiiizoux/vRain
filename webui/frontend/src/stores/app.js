@@ -19,11 +19,15 @@ export const useAppStore = defineStore('app', () => {
   const toggleTheme = () => {
     theme.value = theme.value === 'light' ? 'dark' : 'light'
     // 更新HTML类名
-    if (theme.value === 'dark') {
-      document.documentElement.classList.add('dark')
-    } else {
-      document.documentElement.classList.remove('dark')
+    if (typeof document !== 'undefined' && document.documentElement) {
+      if (theme.value === 'dark') {
+        document.documentElement.classList.add('dark')
+      } else {
+        document.documentElement.classList.remove('dark')
+      }
     }
+    // 保存主题设置
+    saveTheme()
   }
   
   const setLoading = (value) => {
@@ -36,18 +40,33 @@ export const useAppStore = defineStore('app', () => {
   
   // 初始化主题
   const initTheme = () => {
-    const savedTheme = localStorage.getItem('vrain-theme')
-    if (savedTheme) {
-      theme.value = savedTheme
-      if (savedTheme === 'dark') {
-        document.documentElement.classList.add('dark')
+    // 确保在浏览器环境中运行
+    if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
+      return
+    }
+
+    try {
+      const savedTheme = localStorage.getItem('vrain-theme')
+      if (savedTheme) {
+        theme.value = savedTheme
+        if (savedTheme === 'dark' && document?.documentElement) {
+          document.documentElement.classList.add('dark')
+        }
       }
+    } catch (error) {
+      console.warn('Failed to initialize theme:', error)
     }
   }
   
   // 保存主题到本地存储
   const saveTheme = () => {
-    localStorage.setItem('vrain-theme', theme.value)
+    if (typeof localStorage !== 'undefined') {
+      try {
+        localStorage.setItem('vrain-theme', theme.value)
+      } catch (error) {
+        console.warn('Failed to save theme:', error)
+      }
+    }
   }
   
   return {

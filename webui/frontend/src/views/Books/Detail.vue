@@ -121,39 +121,77 @@
       </el-row>
 
       <!-- 文件列表 -->
-      <el-card title="文本文件" class="detail-card files-card" v-if="book">
-        <template #header>
-          <div class="card-header">
-            <span>文本文件 ({{ files.length }})</span>
-            <el-button type="primary" @click="showUploadDialog = true">
-              <el-icon><Upload /></el-icon>
-              上传文件
-            </el-button>
-          </div>
-        </template>
-        
-        <el-table :data="files" v-loading="filesLoading">
-          <el-table-column prop="name" label="文件名" />
-          <el-table-column prop="size" label="大小" :formatter="formatFileSize" />
-          <el-table-column prop="modifiedAt" label="修改时间" :formatter="formatDate" />
-          <el-table-column label="操作" width="200">
-            <template #default="{ row }">
-              <el-button type="text" @click="handleEditFile(row)">
-                <el-icon><Edit /></el-icon>
-                编辑
-              </el-button>
-              <el-button type="text" @click="handleDownloadFile(row)">
-                <el-icon><Download /></el-icon>
-                下载
-              </el-button>
-              <el-button type="text" danger @click="handleDeleteFile(row)">
-                <el-icon><Delete /></el-icon>
-                删除
-              </el-button>
+      <el-row :gutter="24" v-if="book">
+        <!-- 文本文件 -->
+        <el-col :span="12">
+          <el-card title="文本文件" class="detail-card files-card">
+            <template #header>
+              <div class="card-header">
+                <span>文本文件 ({{ files.length }})</span>
+                <el-button type="primary" size="small" @click="showUploadDialog = true">
+                  <el-icon><Upload /></el-icon>
+                  上传文件
+                </el-button>
+              </div>
             </template>
-          </el-table-column>
-        </el-table>
-      </el-card>
+
+            <el-table :data="files" v-loading="filesLoading" max-height="300">
+              <el-table-column prop="filename" label="文件名" />
+              <el-table-column prop="size" label="大小" :formatter="formatFileSize" width="80" />
+              <el-table-column label="操作" width="120">
+                <template #default="{ row }">
+                  <el-button type="text" size="small" @click="handleEditFile(row)">
+                    <el-icon><Edit /></el-icon>
+                  </el-button>
+                  <el-button type="text" size="small" @click="handleDownloadFile(row)">
+                    <el-icon><Download /></el-icon>
+                  </el-button>
+                  <el-button type="text" size="small" danger @click="handleDeleteFile(row)">
+                    <el-icon><Delete /></el-icon>
+                  </el-button>
+                </template>
+              </el-table-column>
+            </el-table>
+          </el-card>
+        </el-col>
+
+        <!-- 生成的文件 -->
+        <el-col :span="12">
+          <el-card title="生成的文件" class="detail-card files-card">
+            <template #header>
+              <div class="card-header">
+                <span>生成的文件 ({{ generatedFiles.length }})</span>
+                <el-button type="primary" size="small" @click="fetchGeneratedFiles">
+                  <el-icon><Refresh /></el-icon>
+                  刷新
+                </el-button>
+              </div>
+            </template>
+
+            <el-table :data="generatedFiles" v-loading="generatedLoading" max-height="300">
+              <el-table-column prop="filename" label="文件名" />
+              <el-table-column prop="size" label="大小" :formatter="formatFileSize" width="80" />
+              <el-table-column label="类型" width="80">
+                <template #default="{ row }">
+                  <el-tag size="small" :type="row.isCompressed ? 'success' : 'info'">
+                    {{ row.isCompressed ? '压缩' : '原始' }}
+                  </el-tag>
+                </template>
+              </el-table-column>
+              <el-table-column label="操作" width="120">
+                <template #default="{ row }">
+                  <el-button type="text" size="small" @click="handleDownloadGenerated(row)">
+                    <el-icon><Download /></el-icon>
+                  </el-button>
+                  <el-button type="text" size="small" @click="handlePreviewPdf(row)">
+                    <el-icon><View /></el-icon>
+                  </el-button>
+                </template>
+              </el-table-column>
+            </el-table>
+          </el-card>
+        </el-col>
+      </el-row>
     </div>
 
     <!-- 上传文件对话框 -->
@@ -196,10 +234,12 @@ const booksStore = useBooksStore()
 const bookId = computed(() => route.params.id)
 const book = ref(null)
 const files = ref([])
+const generatedFiles = ref([])
 const generateStatus = ref(null)
 
 const loading = ref(false)
 const filesLoading = ref(false)
+const generatedLoading = ref(false)
 const editMode = ref(false)
 const saving = ref(false)
 const generating = ref(false)
@@ -221,7 +261,7 @@ const rules = {
 const fetchBookDetail = async () => {
   try {
     loading.value = true
-    book.value = await booksStore.getBook(bookId.value)
+    book.value = await booksStore.fetchBook(bookId.value)
     
     // 初始化编辑表单
     Object.assign(editForm, {
@@ -246,6 +286,19 @@ const fetchFiles = async () => {
     ElMessage.error('获取文件列表失败')
   } finally {
     filesLoading.value = false
+  }
+}
+
+// 获取生成的文件列表
+const fetchGeneratedFiles = async () => {
+  try {
+    generatedLoading.value = true
+    const response = await booksApi.getGeneratedFiles(bookId.value)
+    generatedFiles.value = response.data
+  } catch (error) {
+    ElMessage.error('获取生成文件列表失败')
+  } finally {
+    generatedLoading.value = false
   }
 }
 
@@ -303,12 +356,19 @@ const handlePreview = async () => {
 
 // 文件操作
 const handleEditFile = (file) => {
-  router.push(`/books/${bookId.value}/files/${file.name}/edit`)
+  router.push(`/books/${bookId.value}/files`)
 }
 
 const handleDownloadFile = async (file) => {
   try {
-    await booksStore.downloadFile(bookId.value, file.name)
+    const response = await booksApi.getTextContent(bookId.value, file.filename)
+    const blob = new Blob([response.data.content], { type: 'text/plain' })
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = file.filename
+    a.click()
+    window.URL.revokeObjectURL(url)
   } catch (error) {
     ElMessage.error('下载失败')
   }
@@ -316,11 +376,11 @@ const handleDownloadFile = async (file) => {
 
 const handleDeleteFile = async (file) => {
   try {
-    await ElMessageBox.confirm(`确定要删除文件 ${file.name} 吗？`, '确认删除', {
+    await ElMessageBox.confirm(`确定要删除文件 ${file.filename} 吗？`, '确认删除', {
       type: 'warning'
     })
-    
-    await booksStore.deleteFile(bookId.value, file.name)
+
+    await booksStore.deleteFile(bookId.value, file.filename)
     ElMessage.success('删除成功')
     fetchFiles()
   } catch (error) {
@@ -328,6 +388,26 @@ const handleDeleteFile = async (file) => {
       ElMessage.error('删除失败')
     }
   }
+}
+
+// 生成文件操作
+const handleDownloadGenerated = async (file) => {
+  try {
+    const response = await booksApi.downloadFile(bookId.value, file.filename)
+    const url = window.URL.createObjectURL(response.data)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = file.filename
+    a.click()
+    window.URL.revokeObjectURL(url)
+  } catch (error) {
+    ElMessage.error('下载失败')
+  }
+}
+
+const handlePreviewPdf = (file) => {
+  const url = `/static/books/${bookId.value}/${file.filename}`
+  window.open(url, '_blank')
 }
 
 // 上传相关
@@ -371,6 +451,7 @@ const getStatusType = (status) => {
 onMounted(() => {
   fetchBookDetail()
   fetchFiles()
+  fetchGeneratedFiles()
   fetchGenerateStatus()
 })
 </script>

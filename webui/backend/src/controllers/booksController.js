@@ -1,3 +1,5 @@
+import path from 'path'
+import fs from 'fs-extra'
 import { BooksService } from '../services/booksService.js'
 import { TasksService } from '../services/tasksService.js'
 import { logger } from '../utils/logger.js'
@@ -308,14 +310,64 @@ export class BooksController {
     try {
       const { id } = req.params
       const { pages = 5 } = req.query
-      
+
       const task = await this.tasksService.createPreviewTask(id, { pages: parseInt(pages) })
-      
+
       res.json({
         success: true,
         data: task,
         message: '预览任务已创建'
       })
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  // 获取生成的文件列表
+  async getGeneratedFiles(req, res, next) {
+    try {
+      const { id } = req.params
+      const files = await this.booksService.getGeneratedFiles(id)
+
+      res.json({
+        success: true,
+        data: files
+      })
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  // 下载生成的文件
+  async downloadGeneratedFile(req, res, next) {
+    try {
+      const { id, filename } = req.params
+      const filePath = path.join(this.booksService.booksRoot, id, filename)
+
+      // 检查文件是否存在且是PDF文件
+      if (!filename.endsWith('.pdf')) {
+        return res.status(400).json({
+          success: false,
+          message: '只能下载PDF文件'
+        })
+      }
+
+      // 检查文件是否存在
+      if (!await fs.pathExists(filePath)) {
+        return res.status(404).json({
+          success: false,
+          message: '文件不存在'
+        })
+      }
+
+      // 设置下载头
+      res.setHeader('Content-Type', 'application/pdf')
+      res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(filename)}"`)
+
+      // 发送文件
+      res.sendFile(filePath)
+
+      logger.info(`下载文件: ${id}/${filename}`)
     } catch (error) {
       next(error)
     }

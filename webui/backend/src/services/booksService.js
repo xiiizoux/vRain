@@ -9,7 +9,9 @@ const __dirname = path.dirname(__filename)
 
 export class BooksService {
   constructor() {
-    this.booksRoot = path.join(__dirname, '../../../..', 'books')
+    // 使用环境变量或默认路径
+    const vrainRoot = process.env.VRAIN_ROOT || '/app'
+    this.booksRoot = path.join(vrainRoot, 'books')
     this.ensureBooksDirectory()
   }
 
@@ -316,6 +318,43 @@ export class BooksService {
     }
   }
 
+  // 获取生成的PDF文件列表
+  async getGeneratedFiles(id) {
+    const bookPath = path.join(this.booksRoot, id)
+
+    try {
+      const files = []
+
+      if (await fs.pathExists(bookPath)) {
+        const dirContents = await fs.readdir(bookPath)
+
+        for (const filename of dirContents) {
+          if (filename.endsWith('.pdf')) {
+            const filePath = path.join(bookPath, filename)
+            const stats = await fs.stat(filePath)
+
+            files.push({
+              filename,
+              path: filePath,
+              size: stats.size,
+              createdAt: stats.birthtime,
+              modifiedAt: stats.mtime,
+              isCompressed: filename.includes('_已压缩')
+            })
+          }
+        }
+      }
+
+      // 按修改时间倒序排列
+      files.sort((a, b) => new Date(b.modifiedAt) - new Date(a.modifiedAt))
+
+      return files
+    } catch (error) {
+      logger.error(`获取生成文件列表失败: ${id}`, error)
+      throw error
+    }
+  }
+
   // 生成书籍ID
   generateBookId() {
     return uuidv4().replace(/-/g, '').substring(0, 8)
@@ -325,16 +364,17 @@ export class BooksService {
   async loadBookInfo(id) {
     const infoPath = path.join(this.booksRoot, id, 'book.json')
     const configPath = path.join(this.booksRoot, id, 'book.cfg')
-    
+    const bookPath = path.join(this.booksRoot, id)
+
     try {
       let bookInfo = {}
-      
+
       // 尝试加载JSON信息文件
       if (await fs.pathExists(infoPath)) {
         const content = await fs.readFile(infoPath, 'utf-8')
         bookInfo = JSON.parse(content)
       }
-      
+
       // 如果没有JSON文件，从配置文件中提取信息
       if (!bookInfo.title && await fs.pathExists(configPath)) {
         const configContent = await fs.readFile(configPath, 'utf-8')
@@ -347,16 +387,36 @@ export class BooksService {
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()
         }
-        
+
         // 保存提取的信息
         await this.saveBookInfo(id, bookInfo)
       }
-      
+
+      // 如果既没有JSON也没有配置文件，跳过这个目录
+      if (!bookInfo.title) {
+        return null
+      }
+
       // 获取文本文件数量
       const texts = await this.getBookTexts(id)
       bookInfo.textCount = texts.length
-      
-      return bookInfo.title ? bookInfo : null
+
+      // 检查是否有生成的PDF文件，更新状态
+      const generatedFiles = await this.getGeneratedFiles(id)
+      if (generatedFiles.length > 0) {
+        bookInfo.status = 'completed'
+        bookInfo.generatedFiles = generatedFiles
+      } else if (texts.length > 0) {
+        bookInfo.status = 'ready'
+      }
+
+      // 添加封面图片路径（如果存在）
+      const coverPath = path.join(bookPath, 'cover.jpg')
+      if (await fs.pathExists(coverPath)) {
+        bookInfo.cover = `/static/books/${id}/cover.jpg`
+      }
+
+      return bookInfo
     } catch (error) {
       logger.error(`加载书籍信息失败: ${id}`, error)
       return null

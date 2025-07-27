@@ -134,6 +134,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { formatDate } from '@/utils/format'
+import { tasksApi } from '@/utils/api'
 
 // 响应式数据
 const loading = ref(false)
@@ -144,42 +145,7 @@ const total = ref(0)
 const logDialogVisible = ref(false)
 const currentLog = ref('')
 
-const tasks = ref([
-  {
-    id: 'task_001',
-    bookId: 'book_001',
-    bookTitle: '示例书籍',
-    type: 'generate',
-    status: 'completed',
-    progress: 100,
-    startTime: '2025-01-01T10:00:00Z',
-    endTime: '2025-01-01T10:05:00Z',
-    duration: 300000, // 5分钟
-    outputPath: '/output/book_001.pdf'
-  },
-  {
-    id: 'task_002',
-    bookId: 'book_002',
-    bookTitle: '另一本书',
-    type: 'preview',
-    status: 'running',
-    progress: 65,
-    startTime: '2025-01-01T11:00:00Z',
-    duration: 120000 // 2分钟
-  },
-  {
-    id: 'task_003',
-    bookId: 'book_001',
-    bookTitle: '示例书籍',
-    type: 'generate',
-    status: 'failed',
-    progress: 30,
-    startTime: '2025-01-01T09:00:00Z',
-    endTime: '2025-01-01T09:02:00Z',
-    duration: 120000,
-    error: '生成过程中出现错误'
-  }
-])
+const tasks = ref([])
 
 let refreshTimer = null
 
@@ -201,9 +167,20 @@ const filteredTasks = computed(() => {
 })
 
 // 方法
+const fetchTasks = async () => {
+  try {
+    loading.value = true
+    const response = await tasksApi.getTasks()
+    tasks.value = response.data
+  } catch (error) {
+    ElMessage.error('获取任务列表失败')
+  } finally {
+    loading.value = false
+  }
+}
+
 const handleRefresh = () => {
-  // 刷新任务列表
-  ElMessage.success('任务列表已刷新')
+  fetchTasks()
 }
 
 const handleClearCompleted = async () => {
@@ -238,10 +215,10 @@ const handleCancel = async (task) => {
         type: 'warning'
       }
     )
-    
-    task.status = 'failed'
-    task.error = '用户取消'
+
+    await tasksApi.cancelTask(task.id)
     ElMessage.success('任务已取消')
+    fetchTasks() // 刷新任务列表
   } catch (error) {
     if (error !== 'cancel') {
       ElMessage.error('取消失败')
@@ -276,23 +253,25 @@ const handleRetry = async (task) => {
   }
 }
 
-const handleViewLog = (task) => {
-  currentLog.value = `任务ID: ${task.id}
-书籍: ${task.bookTitle}
+const handleViewLog = async (task) => {
+  try {
+    const response = await tasksApi.getTaskLogs(task.id)
+    currentLog.value = response.data.logs.map(log =>
+      `[${formatDate(log.timestamp)}] ${log.message}`
+    ).join('\n')
+  } catch (error) {
+    currentLog.value = `任务ID: ${task.id}
+书籍: ${task.bookTitle || task.bookId}
 类型: ${formatType(task.type)}
 状态: ${formatStatus(task.status)}
-开始时间: ${formatDate(task.startTime)}
-${task.endTime ? `结束时间: ${formatDate(task.endTime)}` : ''}
+开始时间: ${formatDate(task.startedAt)}
+${task.completedAt ? `结束时间: ${formatDate(task.completedAt)}` : ''}
 ${task.error ? `错误信息: ${task.error}` : ''}
 
 === 详细日志 ===
-[${formatDate(task.startTime)}] 任务开始
-[${formatDate(task.startTime)}] 初始化生成环境
-[${formatDate(task.startTime)}] 加载书籍配置
-${task.status === 'running' ? '[进行中] 正在生成页面...' : ''}
-${task.status === 'completed' ? '[完成] 生成成功' : ''}
-${task.status === 'failed' ? `[失败] ${task.error}` : ''}`
-  
+${task.logs ? task.logs.map(log => `[${formatDate(log.timestamp)}] ${log.message}`).join('\n') : '暂无日志'}`
+  }
+
   logDialogVisible.value = true
 }
 
@@ -385,8 +364,11 @@ const updateProgress = () => {
 
 // 生命周期
 onMounted(() => {
+  fetchTasks()
   // 定时更新进度
-  refreshTimer = setInterval(updateProgress, 2000)
+  refreshTimer = setInterval(() => {
+    fetchTasks()
+  }, 5000)
 })
 
 onUnmounted(() => {

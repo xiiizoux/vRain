@@ -125,7 +125,7 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAppStore } from '@/stores/app'
 
@@ -156,8 +156,10 @@ const handleAbout = () => {
   aboutVisible.value = true
 }
 
-// 初始化
-appStore.initTheme()
+// 初始化 - 在组件挂载后执行
+onMounted(() => {
+  appStore.initTheme()
+})
 </script>
 
 <style lang="scss" scoped>

@@ -65,8 +65,14 @@ router.post('/:id/generate', booksController.generateBook.bind(booksController))
 router.get('/:id/generate/status', booksController.getGenerateStatus.bind(booksController))
 router.post('/:id/generate/cancel', booksController.cancelGenerate.bind(booksController))
 
+// 获取生成的文件
+router.get('/:id/files', booksController.getGeneratedFiles.bind(booksController))
+
+// 下载生成的文件
+router.get('/:id/files/:filename/download', booksController.downloadGeneratedFile.bind(booksController))
+
 // 书籍预览
-router.get('/:id/preview', booksController.previewBook.bind(booksController))
+router.post('/:id/preview', booksController.previewBook.bind(booksController))
 
 // 书籍导出/导入
 router.get('/:id/export', booksController.exportBook.bind(booksController))

@@ -26,6 +26,24 @@ const routes = [
         }
       },
       {
+        path: '/books/:id/config',
+        name: 'BookConfig',
+        component: () => import('@/views/Books/Config.vue'),
+        meta: {
+          title: '书籍配置',
+          hidden: true
+        }
+      },
+      {
+        path: '/books/:id/files',
+        name: 'BookFiles',
+        component: () => import('@/views/Books/Files.vue'),
+        meta: {
+          title: '文件管理',
+          hidden: true
+        }
+      },
+      {
         path: '/canvas',
         name: 'Canvas',
         component: () => import('@/views/Canvas/index.vue'),

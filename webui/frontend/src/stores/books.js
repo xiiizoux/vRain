@@ -121,6 +121,71 @@ export const useBooksStore = defineStore('books', () => {
       loading.value = false
     }
   }
+
+  const previewBook = async (id, options = {}) => {
+    loading.value = true
+    error.value = null
+    try {
+      const response = await booksApi.previewBook(id, options)
+      return response.data
+    } catch (err) {
+      error.value = err.message
+      console.error('预览书籍失败:', err)
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const getBookFiles = async (id) => {
+    loading.value = true
+    error.value = null
+    try {
+      const response = await booksApi.getBookTexts(id)
+      return response.data
+    } catch (err) {
+      error.value = err.message
+      console.error('获取书籍文件失败:', err)
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const getBookGenerateStatus = async (id) => {
+    error.value = null
+    try {
+      const response = await booksApi.getGenerateStatus(id)
+      return response.data
+    } catch (err) {
+      error.value = err.message
+      console.error('获取生成状态失败:', err)
+      throw err
+    }
+  }
+
+  const downloadFile = async (id, filename) => {
+    error.value = null
+    try {
+      const response = await booksApi.downloadFile(id, filename)
+      return response.data
+    } catch (err) {
+      error.value = err.message
+      console.error('下载文件失败:', err)
+      throw err
+    }
+  }
+
+  const deleteFile = async (id, filename) => {
+    error.value = null
+    try {
+      await booksApi.deleteText(id, filename)
+    } catch (err) {
+      error.value = err.message
+      console.error('删除文件失败:', err)
+      throw err
+    }
+  }
   
   const clearError = () => {
     error.value = null
@@ -136,11 +201,11 @@ export const useBooksStore = defineStore('books', () => {
     currentBook,
     loading,
     error,
-    
+
     // 计算属性
     bookCount,
     booksByStatus,
-    
+
     // 方法
     fetchBooks,
     fetchBook,
@@ -148,6 +213,11 @@ export const useBooksStore = defineStore('books', () => {
     updateBook,
     deleteBook,
     generateBook,
+    previewBook,
+    getBookFiles,
+    getBookGenerateStatus,
+    downloadFile,
+    deleteFile,
     clearError,
     setCurrentBook
   }

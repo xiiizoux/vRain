@@ -12,7 +12,8 @@ export class TasksService extends EventEmitter {
   constructor() {
     super()
     this.tasks = new Map()
-    this.vrainRoot = path.join(__dirname, '../../../..')
+    // 使用环境变量或默认路径
+    this.vrainRoot = process.env.VRAIN_ROOT || '/app'
   }
 
   // 创建生成任务

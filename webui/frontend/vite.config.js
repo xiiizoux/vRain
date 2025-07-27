@@ -60,6 +60,14 @@ export default defineConfig({
           }
         }
       }
+    },
+    // 添加更严格的构建选项来避免初始化问题
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: true,
+        drop_debugger: true
+      }
     }
   }
 })

@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import api from '@/utils/api'
+import api, { canvasApi } from '@/utils/api'
 
 export const useCanvasStore = defineStore('canvas', () => {
   const canvases = ref([])
@@ -10,7 +10,7 @@ export const useCanvasStore = defineStore('canvas', () => {
   const getCanvases = async () => {
     try {
       loading.value = true
-      const response = await api.get('/canvas')
+      const response = await canvasApi.getCanvases()
       canvases.value = response.data
       return response.data
     } catch (error) {
@@ -24,7 +24,7 @@ export const useCanvasStore = defineStore('canvas', () => {
   // 获取单个背景图
   const getCanvas = async (id) => {
     try {
-      const response = await api.get(`/canvas/${id}`)
+      const response = await canvasApi.getCanvas(id)
       return response.data
     } catch (error) {
       console.error('获取背景图详情失败:', error)
@@ -35,7 +35,7 @@ export const useCanvasStore = defineStore('canvas', () => {
   // 创建背景图
   const createCanvas = async (data) => {
     try {
-      const response = await api.post('/canvas', data)
+      const response = await canvasApi.createCanvas(data)
       canvases.value.push(response.data)
       return response.data
     } catch (error) {
@@ -47,7 +47,7 @@ export const useCanvasStore = defineStore('canvas', () => {
   // 更新背景图
   const updateCanvas = async (id, data) => {
     try {
-      const response = await api.put(`/canvas/${id}`, data)
+      const response = await canvasApi.updateCanvas(id, data)
       const index = canvases.value.findIndex(c => c.id === id)
       if (index !== -1) {
         canvases.value[index] = response.data
@@ -62,7 +62,7 @@ export const useCanvasStore = defineStore('canvas', () => {
   // 删除背景图
   const deleteCanvas = async (id) => {
     try {
-      await api.delete(`/canvas/${id}`)
+      await canvasApi.deleteCanvas(id)
       const index = canvases.value.findIndex(c => c.id === id)
       if (index !== -1) {
         canvases.value.splice(index, 1)
@@ -76,7 +76,7 @@ export const useCanvasStore = defineStore('canvas', () => {
   // 获取背景图配置
   const getCanvasConfig = async (id) => {
     try {
-      const response = await api.get(`/canvas/${id}/config`)
+      const response = await canvasApi.getCanvasConfig(id)
       return response.data
     } catch (error) {
       console.error('获取背景图配置失败:', error)
@@ -87,7 +87,7 @@ export const useCanvasStore = defineStore('canvas', () => {
   // 更新背景图配置
   const updateCanvasConfig = async (id, config) => {
     try {
-      const response = await api.put(`/canvas/${id}/config`, config)
+      const response = await canvasApi.updateCanvasConfig(id, config)
       return response.data
     } catch (error) {
       console.error('更新背景图配置失败:', error)
@@ -96,9 +96,9 @@ export const useCanvasStore = defineStore('canvas', () => {
   }
 
   // 生成背景图
-  const generateCanvas = async (id) => {
+  const generateCanvas = async (id, style = 'normal') => {
     try {
-      const response = await api.post(`/canvas/${id}/generate`)
+      const response = await canvasApi.generateCanvas(id, style)
       return response.data
     } catch (error) {
       console.error('生成背景图失败:', error)

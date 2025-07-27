@@ -52,6 +52,21 @@ export const booksApi = {
   
   // 生成书籍
   generateBook: (id, options) => api.post(`/books/${id}/generate`, options),
+
+  // 预览书籍
+  previewBook: (id, options) => api.post(`/books/${id}/preview`, options),
+
+  // 获取生成状态
+  getGenerateStatus: (id) => api.get(`/books/${id}/generate/status`),
+
+  // 取消生成
+  cancelGenerate: (id) => api.post(`/books/${id}/generate/cancel`),
+
+  // 获取生成的文件列表
+  getGeneratedFiles: (id) => api.get(`/books/${id}/files`),
+
+  // 下载生成的文件
+  downloadFile: (id, filename) => api.get(`/books/${id}/files/${filename}/download`, { responseType: 'blob' }),
   
   // 获取书籍配置
   getBookConfig: (id) => api.get(`/books/${id}/config`),
@@ -72,7 +87,13 @@ export const booksApi = {
   },
   
   // 删除文本文件
-  deleteText: (id, filename) => api.delete(`/books/${id}/texts/${filename}`)
+  deleteText: (id, filename) => api.delete(`/books/${id}/texts/${filename}`),
+
+  // 获取文本内容
+  getTextContent: (id, filename) => api.get(`/books/${id}/texts/${filename}`),
+
+  // 更新文本内容
+  updateTextContent: (id, filename, data) => api.put(`/books/${id}/texts/${filename}`, data)
 }
 
 // 背景图相关API
