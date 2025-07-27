@@ -140,8 +140,8 @@ RUN chmod +x /entrypoint.sh
 EXPOSE 3012
 
 # 健康检查
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:3012/health || exit 1
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:3012/health >/dev/null 2>&1 || exit 1
 
 # 使用新的启动脚本
 CMD ["/entrypoint.sh"]

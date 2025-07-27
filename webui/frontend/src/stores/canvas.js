@@ -11,8 +11,10 @@ export const useCanvasStore = defineStore('canvas', () => {
     try {
       loading.value = true
       const response = await canvasApi.getCanvases()
-      canvases.value = response.data
-      return response.data
+      // 处理后端返回的数据结构
+      const canvasData = response.data.data || response.data
+      canvases.value = canvasData
+      return canvasData
     } catch (error) {
       console.error('获取背景图列表失败:', error)
       throw error
@@ -25,7 +27,8 @@ export const useCanvasStore = defineStore('canvas', () => {
   const getCanvas = async (id) => {
     try {
       const response = await canvasApi.getCanvas(id)
-      return response.data
+      // 处理后端返回的数据结构
+      return response.data.data || response.data
     } catch (error) {
       console.error('获取背景图详情失败:', error)
       throw error
@@ -36,8 +39,10 @@ export const useCanvasStore = defineStore('canvas', () => {
   const createCanvas = async (data) => {
     try {
       const response = await canvasApi.createCanvas(data)
-      canvases.value.push(response.data)
-      return response.data
+      // 处理后端返回的数据结构
+      const newCanvas = response.data.data || response.data
+      canvases.value.push(newCanvas)
+      return newCanvas
     } catch (error) {
       console.error('创建背景图失败:', error)
       throw error

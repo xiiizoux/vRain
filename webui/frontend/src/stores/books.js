@@ -26,7 +26,8 @@ export const useBooksStore = defineStore('books', () => {
     error.value = null
     try {
       const response = await booksApi.getBooks()
-      books.value = response.data
+      // 处理后端返回的数据结构 {success: true, data: [...], pagination: {...}}
+      books.value = response.data.data || []
     } catch (err) {
       error.value = err.message
       console.error('获取书籍列表失败:', err)
@@ -40,8 +41,10 @@ export const useBooksStore = defineStore('books', () => {
     error.value = null
     try {
       const response = await booksApi.getBook(id)
-      currentBook.value = response.data
-      return response.data
+      // 处理后端返回的数据结构
+      const bookData = response.data.data || response.data
+      currentBook.value = bookData
+      return bookData
     } catch (err) {
       error.value = err.message
       console.error('获取书籍详情失败:', err)
@@ -56,8 +59,10 @@ export const useBooksStore = defineStore('books', () => {
     error.value = null
     try {
       const response = await booksApi.createBook(bookData)
-      books.value.push(response.data)
-      return response.data
+      // 处理后端返回的数据结构
+      const newBook = response.data.data || response.data
+      books.value.push(newBook)
+      return newBook
     } catch (err) {
       error.value = err.message
       console.error('创建书籍失败:', err)
@@ -72,14 +77,16 @@ export const useBooksStore = defineStore('books', () => {
     error.value = null
     try {
       const response = await booksApi.updateBook(id, bookData)
+      // 处理后端返回的数据结构
+      const updatedBook = response.data.data || response.data
       const index = books.value.findIndex(book => book.id === id)
       if (index !== -1) {
-        books.value[index] = response.data
+        books.value[index] = updatedBook
       }
       if (currentBook.value && currentBook.value.id === id) {
-        currentBook.value = response.data
+        currentBook.value = updatedBook
       }
-      return response.data
+      return updatedBook
     } catch (err) {
       error.value = err.message
       console.error('更新书籍失败:', err)
@@ -112,7 +119,8 @@ export const useBooksStore = defineStore('books', () => {
     error.value = null
     try {
       const response = await booksApi.generateBook(id, options)
-      return response.data
+      // 处理后端返回的数据结构
+      return response.data.data || response.data
     } catch (err) {
       error.value = err.message
       console.error('生成书籍失败:', err)
@@ -127,7 +135,8 @@ export const useBooksStore = defineStore('books', () => {
     error.value = null
     try {
       const response = await booksApi.previewBook(id, options)
-      return response.data
+      // 处理后端返回的数据结构
+      return response.data.data || response.data
     } catch (err) {
       error.value = err.message
       console.error('预览书籍失败:', err)
@@ -142,7 +151,8 @@ export const useBooksStore = defineStore('books', () => {
     error.value = null
     try {
       const response = await booksApi.getBookTexts(id)
-      return response.data
+      // 处理后端返回的数据结构
+      return response.data.data || response.data
     } catch (err) {
       error.value = err.message
       console.error('获取书籍文件失败:', err)
@@ -156,7 +166,8 @@ export const useBooksStore = defineStore('books', () => {
     error.value = null
     try {
       const response = await booksApi.getGenerateStatus(id)
-      return response.data
+      // 处理后端返回的数据结构
+      return response.data.data || response.data
     } catch (err) {
       error.value = err.message
       console.error('获取生成状态失败:', err)
@@ -168,6 +179,7 @@ export const useBooksStore = defineStore('books', () => {
     error.value = null
     try {
       const response = await booksApi.downloadFile(id, filename)
+      // 下载文件返回的是blob数据，不需要额外处理
       return response.data
     } catch (err) {
       error.value = err.message
